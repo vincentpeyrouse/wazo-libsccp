@@ -336,17 +336,15 @@ static void sccp_speeddial_del_extension_state_cb(struct sccp_speeddial *sd)
 static enum sccp_blf_status extstate_ast2sccp(const struct sccp_device *device, int state)
 {
 	switch (state) {
-	case AST_EXTENSION_DEACTIVATED:
-	case AST_EXTENSION_REMOVED:
-		return SCCP_BLF_STATUS_UNKNOWN;
-	}
-
-	if (state & AST_EXTENSION_INUSE) {
+	case AST_EXTENSION_NOT_INUSE:
+		return SCCP_BLF_STATUS_IDLE;
+	case AST_EXTENSION_INUSE:
+	case AST_EXTENSION_ONHOLD:
+	case AST_EXTENSION_ONHOLD + AST_EXTENSION_INUSE:
+	case AST_EXTENSION_BUSY:
 		return SCCP_BLF_STATUS_INUSE;
-	}
-
-	switch (state) {
 	case AST_EXTENSION_RINGING:
+	case AST_EXTENSION_RINGING + AST_EXTENSION_INUSE:
 		switch (device->type) {
 		case SCCP_DEVICE_7940:
 		case SCCP_DEVICE_7960:
@@ -354,15 +352,9 @@ static enum sccp_blf_status extstate_ast2sccp(const struct sccp_device *device, 
 		default:
 			return SCCP_BLF_STATUS_ALERTING;
 		}
-
+	case AST_EXTENSION_DEACTIVATED:
+	case AST_EXTENSION_REMOVED:
 	case AST_EXTENSION_UNAVAILABLE:
-		return SCCP_BLF_STATUS_UNKNOWN;
-	case AST_EXTENSION_BUSY:
-		return SCCP_BLF_STATUS_INUSE;
-	case AST_EXTENSION_ONHOLD:
-		return SCCP_BLF_STATUS_INUSE;
-	case AST_EXTENSION_NOT_INUSE:
-		return SCCP_BLF_STATUS_IDLE;
 	default:
 		return SCCP_BLF_STATUS_UNKNOWN;
 	}
